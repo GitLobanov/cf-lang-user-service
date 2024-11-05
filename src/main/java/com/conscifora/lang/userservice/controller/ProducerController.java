@@ -6,18 +6,22 @@ import lombok.*;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
+import java.rmi.server.*;
+import java.util.concurrent.*;
+
 @RestController
-@RequestMapping("/producer")
+@RequestMapping("/product")
 @RequiredArgsConstructor
 public class ProducerController {
 
     private final ProductService productService;
 
-    @SneakyThrows
     @PostMapping
-    public ResponseEntity<String> createProducer(@RequestBody CreateProductDto createProductDto) {
-        String productId = productService.createProduct(createProductDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(productId);
+    public ResponseEntity<String> createProducer(@RequestBody CreateProductDto createProductDto) throws ExecutionException, InterruptedException, ExportException {
+        String productId = productService.createProduct(createProductDto)
+                .orElseThrow(() -> new RuntimeException("Error creating product"));
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(productId);
     }
 
 }

@@ -19,7 +19,7 @@ public class ProductServiceImpl implements ProductService {
     private final KafkaTemplate<String, ProductCreateEvent> kafkaTemplate;
 
     @Override
-    public String createProduct(CreateProductDto createProductDto) {
+    public Optional<String> createProduct(CreateProductDto createProductDto) throws ExecutionException, InterruptedException {
         // TODO save to DB
 
         String productId = UUID.randomUUID().toString();
@@ -31,29 +31,13 @@ public class ProductServiceImpl implements ProductService {
                 .productId(productId)
                 .build();
 
-        // Async request
+        SendResult<String, ProductCreateEvent> result
+                = kafkaTemplate.send("product-created-events-topic", productId, productCreateEvent).get();
 
-//        CompletableFuture<SendResult<String, ProductCreateEvent>> future = kafkaTemplate.send("product-created-events-topic", productId, productCreateEvent);
-//        future.whenComplete(
-//                (result, throwable) -> {
-//                    if (throwable != null) {
-//                        log.error("Failed to send message {}", throwable.getMessage());
-//                    } else {
-//                        log.info("Successfully sent message {}", result.getRecordMetadata());
-//                    }
-//                }
-//        );
-
-        // join is making request in sync
-        // future.join();
-
-        try {
-            SendResult<String, ProductCreateEvent> future = kafkaTemplate.send("product-created-events-topic", productId, productCreateEvent).get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
-
+        log.info("Topic: {}", result.getRecordMetadata().topic());
+        log.info("Offset: {}", result.getRecordMetadata().offset());
+        log.info("Partition: {}", result.getRecordMetadata().partition());
         log.info("Return: {}", productId);
-        return productId;
+        return Optional.of(productId);
     }
 }

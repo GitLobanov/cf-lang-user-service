@@ -1,4 +1,10 @@
 package com.conscifora.lang.userservice.dto;
 
-public record ErrorMessage() {
+
+import java.time.*;
+
+public record ErrorMessage(
+        LocalDateTime timestamp,
+        String message
+) {
 }
